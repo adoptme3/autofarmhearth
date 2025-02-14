@@ -63,7 +63,7 @@ local function startCollectionLoop()
         local firstDestination = getPath({"StaticMap", "Valentines2025", "Roses", "Rose", "rose_text_popup"})
         if firstDestination and firstDestination:IsA("Part") then
             humanoidRootPart.CFrame = firstDestination.CFrame
-            wait(1) -- Pequeno delay antes de coletar Colliders
+            task.wait(1) -- Pequeno delay antes de coletar Colliders
         else
             warn("Primeiro destino não encontrado!")
         end
@@ -73,12 +73,16 @@ local function startCollectionLoop()
             local closestCollider = findClosestCollider()
             if closestCollider then
                 humanoidRootPart.CFrame = closestCollider.CFrame
-                wait(0.5) -- Pequeno delay para evitar teleportes muito rápidos
+                task.wait(0.5) -- Pequeno delay para evitar teleportes muito rápidos
             else
                 warn("Nenhum Collider encontrado! Reiniciando processo...")
                 break -- Sai do loop interno e recomeça desde o início
             end
+
+            task.wait() -- Adiciona uma pausa para evitar travamentos
         end
+
+        task.wait() -- Pausa extra para garantir que o jogo não congele
     end
 end
 
@@ -88,6 +92,6 @@ button.MouseButton1Click:Connect(function()
     button.Text = isActive and "ON" or "OFF"
     
     if isActive then
-        startCollectionLoop() -- Inicia a coleta se estiver ativado
+        task.spawn(startCollectionLoop) -- Executa em uma thread separada para não travar o jogo
     end
 end)
