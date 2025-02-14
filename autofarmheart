@@ -1,0 +1,93 @@
+local player = game.Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+
+local isActive = false -- Variável para ativar/desativar o script
+
+-- Criando a GUI
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "LNscripts"
+screenGui.Parent = game.CoreGui
+
+local button = Instance.new("TextButton")
+button.Size = UDim2.new(0, 100, 0, 50)
+button.Position = UDim2.new(0.5, -50, 0.1, 0)
+button.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+button.TextColor3 = Color3.fromRGB(255, 255, 255)
+button.Text = "Active"
+button.Parent = screenGui
+
+-- Função para buscar um caminho específico no workspace
+local function getPath(path)
+    local current = workspace
+    for _, part in ipairs(path) do
+        if current then
+            current = current:FindFirstChild(part)
+        end
+    end
+    return current
+end
+
+-- Função para calcular a distância entre dois pontos
+local function getDistance(part)
+    return (humanoidRootPart.Position - part.Position).Magnitude
+end
+
+-- Função para encontrar o Collider mais próximo
+local function findClosestCollider()
+    local heartsFolder = getPath({"StaticMap", "Valentines2025", "Hearts"})
+    if heartsFolder and heartsFolder:IsA("Folder") then
+        local closestPart = nil
+        local closestDistance = math.huge
+
+        for _, heart in ipairs(heartsFolder:GetChildren()) do
+            local collider = heart:FindFirstChild("Collider")
+            if collider and collider:IsA("Part") then
+                local distance = getDistance(collider)
+                if distance < closestDistance then
+                    closestDistance = distance
+                    closestPart = collider
+                end
+            end
+        end
+
+        return closestPart
+    end
+    return nil
+end
+
+-- Função principal que executa o processo repetidamente
+local function startCollectionLoop()
+    while isActive do
+        -- Teleporta para o primeiro destino (rose_text_popup)
+        local firstDestination = getPath({"StaticMap", "Valentines2025", "Roses", "Rose", "rose_text_popup"})
+        if firstDestination and firstDestination:IsA("Part") then
+            humanoidRootPart.CFrame = firstDestination.CFrame
+            wait(1) -- Pequeno delay antes de coletar Colliders
+        else
+            warn("Primeiro destino não encontrado!")
+        end
+
+        -- Loop para coletar Colliders repetidamente
+        while isActive do
+            local closestCollider = findClosestCollider()
+            if closestCollider then
+                humanoidRootPart.CFrame = closestCollider.CFrame
+                wait(0.5) -- Pequeno delay para evitar teleportes muito rápidos
+            else
+                warn("Nenhum Collider encontrado! Reiniciando processo...")
+                break -- Sai do loop interno e recomeça desde o início
+            end
+        end
+    end
+end
+
+-- Evento do botão para ativar/desativar o script
+button.MouseButton1Click:Connect(function()
+    isActive = not isActive -- Alterna entre ligado/desligado
+    button.Text = isActive and "ON" or "OFF"
+    
+    if isActive then
+        startCollectionLoop() -- Inicia a coleta se estiver ativado
+    end
+end)
